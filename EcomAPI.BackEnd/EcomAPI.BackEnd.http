@@ -1,0 +1,6 @@
+@EcomAPI.BackEnd_HostAddress = http://localhost:5164
+
+GET {{EcomAPI.BackEnd_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
