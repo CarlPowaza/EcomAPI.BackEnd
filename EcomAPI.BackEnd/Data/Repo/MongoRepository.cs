@@ -17,19 +17,21 @@
         public async Task<List<T>> GetAllAsync() =>
             await _collection.Find(_ => true).ToListAsync();
 
-        public async Task<T?> GetByIdAsync(string id) =>
+        public async Task<T?> GetByIdAsync(int id) =>
             await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
         public async Task CreateAsync(T entity) =>
             await _collection.InsertOneAsync(entity);
 
-        public async Task UpdateAsync(string id, T entity) =>
+        public async Task UpdateAsync(int id, T entity) =>
             await _collection.ReplaceOneAsync(x => x.Id == id, entity);
 
-        public async Task DeleteAsync(string id) =>
+        public async Task DeleteAsync(int id) =>
             await _collection.DeleteOneAsync(x => x.Id == id);
 
         public async Task<List<T>> FindAsync(Expression<Func<T, bool>> filter) =>
             await _collection.Find(filter).ToListAsync();
+
+
     }
 }

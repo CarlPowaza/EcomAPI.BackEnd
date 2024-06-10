@@ -1,21 +1,39 @@
+using EcomAPI.BackEnd.Data.Interfaces.Repo;
+using EcomAPI.BackEnd.Data.Repo;
+using EcomAPI.BackEnd.Data.Services.Catalog;
+using EcomAPI.BackEnd.Data.Services.Catalog.Repo;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-//builder.Services.Configure<MongoDBSettings>(
-//    builder.Configuration.GetSection("MongoDB"));
+// Configure services
+builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
+builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
+    return new MongoClient(settings.ConnectionString);
+});
+builder.Services.AddScoped(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(settings.DatabaseName);
+});
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
 
-//builder.Services.AddSingleton<MongoDBService>();
 
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddEndpointsApiExplorer();  
+
+
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "EcomAPI", Version = "v1" });
@@ -49,7 +67,7 @@ app.UseCors("AllowAll");
 
 
 
-// for serving images
+// for serving images     TODO -UPDATE THIS TO NEW PLACE WITH IMGS
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
@@ -59,59 +77,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 
 
-
-
-//var itemsService = app.Services.GetRequiredService<MongoDBService>();
-
-
-
-
-
-
-
-/////////////////////Catalog
-
-app.MapGet("/api/GetCatalog", () =>
-{
-
-    return "lol";//_DBContext.GetCatalog();
-})
-.WithName("GetCatalog")
-.WithOpenApi();
-
-app.MapGet("/api/GetItem/{id}", (int id) =>
-{
-
-    return "lol";//_DBContext.GetCatalog();
-})
-.WithName("GetItem")
-.WithOpenApi();
-
-app.MapPost("/api/items", async (ItemDTO item) =>
-{
-    if (item == null)
-    {
-        return Results.BadRequest("User is null.");
-    }
-
-    await _DBContext.InsertUser(item);
-
-    return Results.Ok(new { message = "User created successfully.", item });
-}).WithName("CreateItem")
-.WithOpenApi();
-
-
-
-
-
-
-
-
-
-///////////////////////
-///
-
-
+app.MapCatalogEndpoints();
 
 
 
